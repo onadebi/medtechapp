@@ -74,11 +74,14 @@ namespace MedTechAPI.AppCore.Repository
                         var jwtTokenHandler = new JwtSecurityTokenHandler();
 
                         JwtSecurityToken read = jwtTokenHandler.ReadJwtToken(authToken);
-                        var userId = read.Claims.FirstOrDefault(m=> m.Type.Equals("guid",StringComparison.InvariantCultureIgnoreCase))?.Value;
-                        if (!string.IsNullOrWhiteSpace(userId))
+                        var userGuid = read.Claims.FirstOrDefault(m=> m.Type.Equals("guid",StringComparison.InvariantCultureIgnoreCase))?.Value;
+                        if (!string.IsNullOrWhiteSpace(userGuid))
                         {
-                            _contextAccessor.HttpContext.Session.Remove(userId);
+                            _contextAccessor.HttpContext.Session.Remove(userGuid);
                         }
+                        _contextAccessor.HttpContext.Response.Cookies.Delete(AppConstants.CookieUserId);
+                        _contextAccessor.HttpContext.Response.Cookies.Delete("token");
+
                     }
                 }
             }

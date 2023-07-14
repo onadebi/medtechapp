@@ -3,6 +3,7 @@ using MedTechAPI.Domain.DTO;
 using MedTechAPI.Extensions.Services;
 using OnaxTools.Dto.Identity;
 using OnaxTools.Enums.Http;
+using StackExchange.Redis;
 
 namespace MedTechAPI.Extensions.Middleware
 {
@@ -22,7 +23,7 @@ namespace MedTechAPI.Extensions.Middleware
             try
             {
                 string sessionData;
-                if (cookieValue == null)
+                if (cookieValue == null && !objUser.IsSuccess)
                 {
                     SetCookieSession(context, objUser?.Result?.Guid);
                 }
@@ -31,6 +32,10 @@ namespace MedTechAPI.Extensions.Middleware
                     sessionData = context.Session.GetString(objUser?.Result?.Guid ?? cookieValue);
                     if (sessionData != null)
                     {
+                        if(!String.IsNullOrWhiteSpace(objUser?.Result?.Guid) && (cookieValue != objUser?.Result?.Guid))
+                        {
+                            context.Session.Remove(cookieValue);
+                        }
                         AppSessionData<AppUser> appSessionData = System.Text.Json.JsonSerializer.Deserialize<AppSessionData<AppUser>>(sessionData);
                         if (appSessionData == null)
                         {
@@ -65,13 +70,14 @@ namespace MedTechAPI.Extensions.Middleware
         }
 
         #region Class helpers
-        private static void SetCookieSession(HttpContext context, string sessionId = null)
+        public static void SetCookieSession(HttpContext context, string sessionId = null, AppUser appUser = null)
         {
             sessionId = string.IsNullOrWhiteSpace(sessionId) ? Guid.NewGuid().ToString() : sessionId;
             //TODO: Convert from string Type to AppUser Type
-            var userSession = new AppSessionData<string>
+            var userSession = new AppSessionData<AppUser>
             {
                 SessionId = sessionId,
+                Data = appUser,
             };
             context.Session.SetString(sessionId, System.Text.Json.JsonSerializer.Serialize(userSession));
             context.Response.Cookies.Append(AppConstants.CookieUserId, sessionId);

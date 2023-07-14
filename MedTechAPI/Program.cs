@@ -71,12 +71,12 @@ app.UseAuthorization();
 
 app.UseSession(new SessionOptions
 {
-    IdleTimeout = TimeSpan.FromMinutes(60 * 24),
+    IdleTimeout = TimeSpan.FromMinutes(60),
     Cookie = new CookieBuilder
     {
         Name = "MedTech.Session",
         HttpOnly = true,
-        Expiration = TimeSpan.FromDays(7),
+        Expiration = TimeSpan.FromMinutes(60),
     },
 });
 

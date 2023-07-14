@@ -34,9 +34,9 @@ namespace MedTechAPI.Extensions
         public static IServiceCollection AddCustomServiceCollections(this IServiceCollection services, WebApplicationBuilder builder)
         {
             string encryptionKey = Environment.GetEnvironmentVariable("EncryptionKey", EnvironmentVariableTarget.Process) ?? builder.Configuration.GetValue<string>("AppSettings:Encryption:Key");
-            string RedisConfig = Environment.GetEnvironmentVariable(builder.Configuration.GetConnectionString("RedisCon") ?? string.Empty, EnvironmentVariableTarget.Process) ?? builder.Configuration.GetValue<string>("ConnectionStrings:RedisCon");
-            string MongoDbCon = Environment.GetEnvironmentVariable(builder.Configuration.GetConnectionString("MongoDbConnect") ?? string.Empty, EnvironmentVariableTarget.Process) ?? builder.Configuration.GetValue<string>("ConnectionStrings:MongoDbConnect");
-            string dbConstring = Environment.GetEnvironmentVariable(builder.Configuration.GetConnectionString("Default") ?? string.Empty, EnvironmentVariableTarget.Process) ?? builder.Configuration.GetValue<string>("ConnectionStrings:Default");
+            string RedisConfig = Environment.GetEnvironmentVariable(builder.Configuration.GetConnectionString("RedisCon") ?? string.Empty, EnvironmentVariableTarget.Process) ?? builder.Configuration.GetConnectionString("RedisCon");
+            string MongoDbCon = Environment.GetEnvironmentVariable(builder.Configuration.GetConnectionString("MongoDbConnect") ?? string.Empty, EnvironmentVariableTarget.Process) ?? builder.Configuration.GetConnectionString("MongoDbConnect");
+            string dbConstring = Environment.GetEnvironmentVariable(builder.Configuration.GetConnectionString("Default") ?? string.Empty, EnvironmentVariableTarget.Process) ?? builder.Configuration.GetConnectionString("Default");
             string rabbitMqConstring = Environment.GetEnvironmentVariable(builder.Configuration.GetValue<string>("AppSettings:MessageBroker:RabbitMq:ConString") ?? string.Empty, EnvironmentVariableTarget.Process) ?? builder.Configuration.GetValue<string>("AppSettings:MessageBroker:RabbitMq:ConString");
 
             services.Configure<AppSettings>(builder.Configuration.GetSection(nameof(AppSettings)));
@@ -91,7 +91,7 @@ namespace MedTechAPI.Extensions
             services.AddSession((sessionOptions) =>
             {
                 sessionOptions.Cookie.Name = "onasc.cookie";
-                sessionOptions.IdleTimeout = TimeSpan.FromMinutes(60 * 24);
+                sessionOptions.IdleTimeout = TimeSpan.FromMinutes(60);
                 //sessionOptions.Cookie.IsEssential = true;
             });
 

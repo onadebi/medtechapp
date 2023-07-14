@@ -3,6 +3,7 @@ using MedTechAPI.Controllers.Setup;
 using MedTechAPI.Domain.Config;
 using MedTechAPI.Domain.DTO;
 using MedTechAPI.Domain.Enums;
+using MedTechAPI.Extensions.Middleware;
 using MedTechAPI.Extensions.Services;
 using MedTechAPI.Helpers.Filters;
 using Microsoft.AspNetCore.Authorization;
@@ -129,7 +130,7 @@ namespace MedTechAPI.Controllers.ProfileManagement
             var objResp = await _userService.Login(user);
             if (objResp.IsSuccess && !string.IsNullOrWhiteSpace(objResp.Result.Email))
             {
-                objResp.Result.token = _tokenService.CreateToken(new AppUser()
+                var appUser = new AppUser()
                 {
                     DisplayName = $"{objResp.Result.FirstName} {objResp.Result.LastName}",
                     Email = objResp.Result.Email,
@@ -137,9 +138,11 @@ namespace MedTechAPI.Controllers.ProfileManagement
                     Roles = objResp.Result.Roles.ToList<string>(),
                     Id = objResp.Result.Id,
                     CompanyId = objResp.Result.CompanyId,
-                }, _sessionConfig.Auth.ExpireMinutes);
+                };
+                objResp.Result.token = _tokenService.CreateToken(appUser, _sessionConfig.Auth.ExpireMinutes);
                 objResp.Result.Roles = Array.Empty<string>();
 
+                AppSessionManager.SetCookieSession(_contextAccessor.HttpContext, objResp?.Result?.Guid, appUser);
                 _contextAccessor.HttpContext.Response.Cookies.Append(_sessionConfig.Auth.token, objResp.Result.token, new CookieOptions()
                 {
                     Expires = DateTime.Now.AddMinutes(_sessionConfig.Auth.ExpireMinutes),
@@ -158,7 +161,7 @@ namespace MedTechAPI.Controllers.ProfileManagement
         [ProducesResponseType(typeof(bool), (int)HttpStatusCode.OK)]
         public IActionResult Logout()
         {
-            HttpContext.Response.Cookies.Delete("jwt");
+            //HttpContext.Response.Cookies.Delete("jwt");
             _sessionContextRepo.ClearCurrentUserDataFromSession();
             return Ok(true);
         }
