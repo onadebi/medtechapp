@@ -143,14 +143,17 @@ namespace MedTechAPI.Controllers.ProfileManagement
                 objResp.Result.Roles = Array.Empty<string>();
 
                 AppSessionManager.SetCookieSession(_contextAccessor.HttpContext, objResp?.Result?.Guid, appUser);
-                _contextAccessor.HttpContext.Response.Cookies.Append(_sessionConfig.Auth.token, objResp.Result.token, new CookieOptions()
+                var cookieOptions = new CookieOptions()
                 {
                     Expires = DateTime.Now.AddMinutes(_sessionConfig.Auth.ExpireMinutes),
                     HttpOnly = _sessionConfig.Auth.HttpOnly,
                     Secure = _sessionConfig.Auth.Secure,
                     IsEssential = _sessionConfig.Auth.IsEssential,
                     SameSite = SameSiteMode.None
-                });
+                };
+                _contextAccessor.HttpContext.Response.Cookies.Append(_sessionConfig.Auth.token, objResp.Result.token, cookieOptions);
+                _contextAccessor.HttpContext.Response.Cookies.Append(AppConstants.CookieUserId, objResp?.Result?.Guid, cookieOptions);
+
                 return Ok(objResp);
             }
             return Ok(objResp);

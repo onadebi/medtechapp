@@ -81,6 +81,14 @@ namespace MedTechAPI.Extensions
             {
                 OnaxTools.Logger.LogException(ex, "[RedisConnection]");
             }
+
+
+            services.AddSession();// (sessionOptions) =>
+            //{
+            //    sessionOptions.Cookie.Name = "onasc.cookie";
+            //    sessionOptions.IdleTimeout = TimeSpan.FromMinutes(60);
+            //    //sessionOptions.Cookie.IsEssential = true;
+            //});
             services.AddStackExchangeRedisCache((options) =>
             {
                 options.Configuration = RedisConfig;
@@ -88,12 +96,6 @@ namespace MedTechAPI.Extensions
                 //options.Configuration = 
             });
 
-            services.AddSession((sessionOptions) =>
-            {
-                sessionOptions.Cookie.Name = "onasc.cookie";
-                sessionOptions.IdleTimeout = TimeSpan.FromMinutes(60);
-                //sessionOptions.Cookie.IsEssential = true;
-            });
 
             services.AddHttpContextAccessor();
             services.AddHttpClient();

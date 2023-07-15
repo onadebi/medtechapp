@@ -63,12 +63,6 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
-app.UseCors("DefaultCorsPolicy");
-
-app.UseAuthentication();
-app.UseAuthorization();
-
 app.UseSession(new SessionOptions
 {
     IdleTimeout = TimeSpan.FromMinutes(60),
@@ -79,6 +73,13 @@ app.UseSession(new SessionOptions
         Expiration = TimeSpan.FromMinutes(60),
     },
 });
+
+app.UseHttpsRedirection();
+app.UseCors("DefaultCorsPolicy");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 
 app.Use(async (context, next) =>
 {

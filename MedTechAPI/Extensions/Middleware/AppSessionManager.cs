@@ -23,6 +23,10 @@ namespace MedTechAPI.Extensions.Middleware
             try
             {
                 string sessionData;
+                await context.Session.LoadAsync();
+                //context.Session.SetString("onaefe@onasonic.com", "My email is onaefe@onasonic.com");
+                string dummyCHeck = await Task.Run(() => context.Session.GetString("onaefe@onasonic.com"));
+
                 if (cookieValue == null && !objUser.IsSuccess)
                 {
                     SetCookieSession(context, objUser?.Result?.Guid);
@@ -32,7 +36,7 @@ namespace MedTechAPI.Extensions.Middleware
                     sessionData = context.Session.GetString(objUser?.Result?.Guid ?? cookieValue);
                     if (sessionData != null)
                     {
-                        if(!String.IsNullOrWhiteSpace(objUser?.Result?.Guid) && (cookieValue != objUser?.Result?.Guid))
+                        if (!String.IsNullOrWhiteSpace(objUser?.Result?.Guid) && (cookieValue != objUser?.Result?.Guid))
                         {
                             context.Session.Remove(cookieValue);
                         }
@@ -52,6 +56,10 @@ namespace MedTechAPI.Extensions.Middleware
                             context.Session.SetString(appSessionData.SessionId, System.Text.Json.JsonSerializer.Serialize(appSessionData));
                         }
                     }
+                    else if (objUser != null && objUser.IsSuccess && objUser.Result != null && !String.IsNullOrWhiteSpace(objUser.Result.Guid))
+                    {
+                        SetCookieSession(context, objUser.Result.Guid, objUser.Result);
+                    }
                     else
                     {
                         SetCookieSession(context, objUser?.Result?.Guid);
@@ -70,7 +78,7 @@ namespace MedTechAPI.Extensions.Middleware
         }
 
         #region Class helpers
-        public static void SetCookieSession(HttpContext context, string sessionId = null, AppUser appUser = null)
+        public static async void SetCookieSession(HttpContext context, string sessionId = null, AppUser appUser = null)
         {
             sessionId = string.IsNullOrWhiteSpace(sessionId) ? Guid.NewGuid().ToString() : sessionId;
             //TODO: Convert from string Type to AppUser Type
@@ -81,6 +89,8 @@ namespace MedTechAPI.Extensions.Middleware
             };
             context.Session.SetString(sessionId, System.Text.Json.JsonSerializer.Serialize(userSession));
             context.Response.Cookies.Append(AppConstants.CookieUserId, sessionId);
+            context.Session.SetString("onaefe@onasonic.com", "My email is onaefe@onasonic.com");
+            await context.Session.CommitAsync();
         }
         #endregion
     }
