@@ -46,6 +46,12 @@ namespace MedTechAPI.Persistence.ModelBuilders
             {
                 prop.HasIndex(u => new { u.UserProfileId, u.UserGroupId,  u.CompanyId }, name: "ix_UserProfileGroup_UserProfileIdUserGroupId_CompositeUniqueIndex").IsUnique();                
             });
+
+            model.Entity<MainMenu>(prop =>
+            {
+                prop.HasMany<SubMenu>(u => u.SubMenus).WithOne(p=> p.MainMenuId).HasForeignKey(f=> f.MenuID).OnDelete(DeleteBehavior.Restrict);
+            });
+
             model.Entity<MenuController>(prop =>
             {
                 prop.HasIndex(u => new { u.ControllerCode, u.CompanyId }, name: "ix_MenuController_ControllerCode").IsUnique();

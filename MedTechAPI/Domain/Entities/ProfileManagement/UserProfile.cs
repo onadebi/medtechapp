@@ -49,6 +49,10 @@ namespace MedTechAPI.Domain.Entities.ProfileManagement
 
         [Required]
         public DateTime DateLastUpdated { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        public DateTime? DateLastLoggedIn { get; set; } = null;
+
         [Required]
         public bool IsEmailConfirmed { get; set; } = false;
         public bool IsDeactivated { get; set; } = false;

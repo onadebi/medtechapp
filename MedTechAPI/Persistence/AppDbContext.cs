@@ -48,6 +48,8 @@ namespace MedTechAPI.Persistence
         public DbSet<MenuController> MenuController { get; set; }
         public DbSet<MenuControllerActions> MenuControllerActions { get; set; }
         //public DbSet<UserGroupMenuControllerActionPermissions> UserGroupMenuControllerActionPermissions { get; set; }
+        public DbSet<MainMenu> MainMenus { get; set; }
+        public DbSet<SubMenu> SubMenus { get; set; }
         #endregion
 
         #region PATIENTS

@@ -445,7 +445,8 @@ namespace MedTechAPI.AppCore.Repository
                     {
                         int[] userRoleIds = _context.UserProfileGroups.Where(m => m.UserProfileId == objResp.Id).Select(m => m.UserGroupId).ToArray();
                         string[] userRoles = _context.UserGroup.Where(m => userRoleIds.Contains(m.Id)).Select(m => m.GroupName).ToArray();
-                        UserLoginResponse result = new UserLoginResponse()
+                        objResp.DateLastLoggedIn = DateTime.Now;
+                        UserLoginResponse result = new ()
                         {
                             Email = objResp.Email,
                             FirstName = objResp.FirstName,
@@ -455,6 +456,7 @@ namespace MedTechAPI.AppCore.Repository
                             Id = objResp.Id,
                             CompanyId = objResp.MedicCompanyId
                         };
+                        try { await _context.SaveChangesAsync(); } catch { }
                         return GenResponse<UserLoginResponse>.Success(result);
                     }
                 }

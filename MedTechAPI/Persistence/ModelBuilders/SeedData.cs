@@ -90,7 +90,7 @@ namespace MedTechAPI.Persistence.ModelBuilders
                     var displayName = !string.IsNullOrWhiteSpace(ctrName) ? ctrName.Replace("Controller", "") : throw new Exception("Invalid Controller name");
                     string CtrCode = $"MDC{DateTime.Now:yyyyMMddhhMMss}";
 
-                    var companyDetail = menuCtr.FirstOrDefault(m=> m.ControllerName == ctrName.Trim());
+                    var companyDetail = menuCtr.FirstOrDefault(m => m.ControllerName == ctrName.Trim());
 
                     Console.WriteLine($"========{ctrName}========");
                     ctr.Actions.ForEach(a =>
@@ -151,13 +151,89 @@ namespace MedTechAPI.Persistence.ModelBuilders
             };
         }
 
+        public static List<MedicCompanyDetail> GetMedicCompanyListList(AppDbContext _context)
+        {
+            var countryDetail = _context.CountryDetails.AsNoTracking().FirstOrDefault();
+            if (countryDetail != null)
+            {
+                var stateDetail = _context.StateDetails.AsNoTracking().FirstOrDefault(m => m.CountryDetailId == countryDetail.Id);
+                return new List<MedicCompanyDetail>
+            {
+                 new MedicCompanyDetail { CompanyName = "Demo", CountryId = countryDetail.Id, StateId = stateDetail.Id,CompanyAddress = "------" }
+            };
+            }
+            return new List<MedicCompanyDetail>();
+        }
+
+        public static List<MainMenu> GetMainMenuList(AppDbContext _context)
+        {
+            var companyDetail = _context.MedicCompanyDetails.AsNoTracking().Select(c => new MedicCompanyDetail
+            {
+                Id = c.Id
+            }).FirstOrDefault();
+            return new List<MainMenu>
+            {
+                //new MainMenu { TitleDisplay = "Settings", OrderPriority = 100, CompanyId = companyDetail.Id },
+                 new MainMenu { TitleDisplay = "Configurations", OrderPriority = 99, CompanyId = companyDetail.Id },
+                 new MainMenu { TitleDisplay = "Patients", OrderPriority = 98, CompanyId = companyDetail.Id },
+                 new MainMenu { TitleDisplay = "Staffs", OrderPriority = 97, CompanyId = companyDetail.Id },
+                 new MainMenu { TitleDisplay = "Pharmacy", OrderPriority = 97, CompanyId = companyDetail.Id },
+            };
+        }
+
+        public static List<SubMenu> GetSubMenuList(AppDbContext _context)
+        {
+            List<SubMenu> objResp = new();
+            var mainMenu = _context.MainMenus.AsNoTracking();
+
+            var menuForConfig = mainMenu.Where(m => m.TitleDisplay.Contains("Configurations")).FirstOrDefault();
+            if (menuForConfig != null)
+            {
+                objResp.AddRange(new List<SubMenu>
+                    {
+                         new SubMenu { TitleDisplay = "Salutations", OrderPriority = 1, MenuID = menuForConfig.MenuID, CompanyId = menuForConfig.CompanyId },
+                         new SubMenu { TitleDisplay = "User groups", OrderPriority = 2, MenuID = menuForConfig.MenuID , CompanyId = menuForConfig.CompanyId },
+                         new SubMenu { TitleDisplay = "Patients config", OrderPriority = 3, MenuID = menuForConfig.MenuID , CompanyId = menuForConfig.CompanyId },
+                         new SubMenu { TitleDisplay = "Company and branches", OrderPriority = 4, MenuID = menuForConfig.MenuID , CompanyId = menuForConfig.CompanyId },
+                         new SubMenu { TitleDisplay = "Allowed Identifications", OrderPriority = 5, MenuID = menuForConfig.MenuID , CompanyId = menuForConfig.CompanyId },
+                         new SubMenu { TitleDisplay = "Marital status", OrderPriority = 6, MenuID = menuForConfig.MenuID , CompanyId = menuForConfig.CompanyId },
+                         new SubMenu { TitleDisplay = "Country", OrderPriority = 7, MenuID = menuForConfig.MenuID , CompanyId = menuForConfig.CompanyId },
+                         new SubMenu { TitleDisplay = "State/Province", OrderPriority = 8, MenuID = menuForConfig.MenuID , CompanyId = menuForConfig.CompanyId },
+                         new SubMenu { TitleDisplay = "Relationships", OrderPriority = 10, MenuID = menuForConfig.MenuID , CompanyId = menuForConfig.CompanyId },
+                         new SubMenu { TitleDisplay = "Banks", OrderPriority = 12, MenuID = menuForConfig.MenuID , CompanyId = menuForConfig.CompanyId },
+                    });
+            }
+
+            //var menuForSettings = mainMenu.Where(m => m.TitleDisplay.Contains("Settings", StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            //if (menuForConfig != null)
+            //{
+            //    objResp.AddRange(new List<SubMenu>
+            //        {
+            //             new SubMenu { TitleDisplay = "User groups", OrderPriority = 1, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "Users", OrderPriority = 2, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "Gender", OrderPriority = 3, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "Education", OrderPriority = 4, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "Allowed Identifications", OrderPriority = 5, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "Marital status", OrderPriority = 6, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "Country", OrderPriority = 7, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "State/Province", OrderPriority = 8, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "Work sector", OrderPriority = 9, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "Relationships", OrderPriority = 10, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "Residence types", OrderPriority = 11, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "Banks", OrderPriority = 12, MenuID = menuForSettings.MenuID },
+            //             new SubMenu { TitleDisplay = "Advert channel", OrderPriority = 97, MenuID = menuForSettings.MenuID },
+            //        });
+            //}
+            return objResp;
+        }
+
         public static List<UserGroup> GetUserRoles(AppDbContext context)
         {
-            var dbContext = context.MenuControllerActions.Select(m => new string[] { m.ActionName }).AsNoTracking().ToList();
+            var dbContext = context.SubMenus.Select(m => new string[] { m.TitleDisplay }).AsNoTracking().ToList();
             var companyDetail = context.MedicCompanyDetails.FirstOrDefault();
             System.Text.StringBuilder sb = new();
-            dbContext.ForEach(m => { sb.Append(m.FirstOrDefault()+","); });
-           string adminGroupRights = sb.ToString().Trim(',');
+            dbContext.ForEach(m => { sb.Append(m.FirstOrDefault() + ","); });
+            string adminGroupRights = sb.ToString().Trim(',');
             return new List<UserGroup> {
                 new UserGroup { GroupName = UserRolesEnum.Admin.ToString(), GroupDescription = "This is the Adminstrative role."
                 , GroupRight = adminGroupRights, AllowApprove = true, AllowdDelete = true, AllowNew = true, AllowEdit = true, CompanyId = companyDetail.Id},
