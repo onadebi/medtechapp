@@ -41,6 +41,9 @@ namespace MedTechAPI.Domain.Entities.SetupConfigurations
         [Required]
         public DateTime DateLastSubscribed { get; set; } = DateTime.UtcNow;
 
+        [Required]
+        public bool IsMenuDisplayed { get; set; } = false;
+
         public DateTime? DateLastUnSubscribed { get; set; } = null;
 
         #region Navigation properties

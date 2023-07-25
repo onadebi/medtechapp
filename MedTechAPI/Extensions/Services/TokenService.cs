@@ -232,10 +232,15 @@ namespace MedTechAPI.Extensions.Services
                 }
                 else { objResp = GenResponse<AppUser>.Failed("Invalid token credentials"); }
             }
+            catch (SecurityTokenExpiredException err)
+            {
+                OnaxTools.Logger.LogException(err, "[CommonHelpers][ValidateJwt]");
+                objResp = GenResponse<AppUser>.Failed("Expired token credentials");
+            }
             catch (Exception ex)
             {
                 OnaxTools.Logger.LogException(ex, "[CommonHelpers][ValidateJwt]");
-                objResp = GenResponse<AppUser>.Failed("Invalid/Expired token credentials");
+                objResp = GenResponse<AppUser>.Failed("Invalid token credentials");
             }
             return objResp;
         }

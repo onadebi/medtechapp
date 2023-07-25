@@ -31,6 +31,7 @@ namespace MedTechAPI.AppCore.Navigation.Repository
         private readonly IAppSessionContextRepository _appSession;
         private readonly ISqlDataAccess _sqlData;
         private readonly IOptions<AppSettings> _appsettings;
+        private readonly ScriptsConfig _scriptsConfig;
         private readonly ICacheService _cacheService;
         private readonly IUserGroupRepository _userGroupRepo;
         private readonly IMapper _mapper;
@@ -45,6 +46,7 @@ namespace MedTechAPI.AppCore.Navigation.Repository
             , ISqlDataAccess sqlData
             //, IMessageRepository msgRepo
             , IOptions<AppSettings> appsettings
+            , IOptions<ScriptsConfig> scriptsConfig
             , ICacheService cacheService
             , IUserGroupRepository userGroupRepo
             , IMapper mapper)
@@ -55,11 +57,12 @@ namespace MedTechAPI.AppCore.Navigation.Repository
             _appSession = appSession;
             _sqlData = sqlData;
             _appsettings = appsettings;
+            _scriptsConfig = scriptsConfig.Value;
             _cacheService = cacheService;
             _userGroupRepo = userGroupRepo;
             _mapper = mapper;
         }
-                
+
         public async Task<GenResponse<List<MenuModules>>> GetAllNavigationMenu()
         {
             GenResponse<List<MenuModules>> objResp = new GenResponse<List<MenuModules>>();
@@ -68,7 +71,7 @@ namespace MedTechAPI.AppCore.Navigation.Repository
             {
                 try
                 {
-                    objResp.Result = await _context.MenuController.Include(m => m.MenuControllerActions).AsNoTracking().Select(m => new MenuModules
+                    objResp.Result = await _context.MenuController.Where(m => m.IsMenuDisplayed).Include(m => m.MenuControllerActions).AsNoTracking().Select(m => new MenuModules
                     {
                         Id = m.Id,
                         OrderPriority = m.OrderPriority,
@@ -114,18 +117,18 @@ namespace MedTechAPI.AppCore.Navigation.Repository
         }
         public async Task<GenResponse<IEnumerable<AllNavigationMenuFlat>>> GetAllNavigationMenuFlat()
         {
-            GenResponse<IEnumerable<AllNavigationMenuFlat>> objResp = new ();
+            GenResponse<IEnumerable<AllNavigationMenuFlat>> objResp = new();
             objResp.Result = await _cacheService.GetData<List<AllNavigationMenuFlat>>(_cacheSubMenuListFlat());
             if (objResp == null || objResp.Result == null || !objResp.Result.Any())
             {
                 try
                 {
                     string query = "select mc.\"ControllerName\",mc.\"IsSubscribed\", mca.* from public.\"MenuControllerActions\" mca inner join public.\"MenuController\" mc on mca.\"MenuControllerId\" = mc.\"Id\" order by mc.\"Id\"";
-                    objResp.Result= await _sqlData.GetData<AllNavigationMenuFlat, dynamic>(query, new { });
-                    if(objResp.Result != null && objResp.Result.Any())
+                    objResp.Result = await _sqlData.GetData<AllNavigationMenuFlat, dynamic>(query, new { });
+                    if (objResp.Result != null && objResp.Result.Any())
                     {
                         objResp.IsSuccess = true;
-                        await _cacheService.SetData<List<AllNavigationMenuFlat>>(_cacheSubMenuListFlat(),objResp.Result.ToList(),60*60);
+                        await _cacheService.SetData<List<AllNavigationMenuFlat>>(_cacheSubMenuListFlat(), objResp.Result.ToList(), 60 * 60);
                     }
                 }
                 catch (Exception ex)
@@ -239,17 +242,42 @@ namespace MedTechAPI.AppCore.Navigation.Repository
             return objResp;
         }
 
-        public async Task<GenResponse<HashSet<MenuModules>>> GetUserMenuNavigation()
+        public async Task<GenResponse<List<MainMenu>>> GetAllMenuModulesNavigation()
         {
             AppSessionData<AppUser> user = _appSession.GetUserDataFromSession();
-            GenResponse<HashSet<MenuModules>> objResp = new GenResponse<HashSet<MenuModules>>() { Result = new() };
+            GenResponse<List<MainMenu>> objResp = new GenResponse<List<MainMenu>>() { Result = new() };
             try
             {
-                
+                objResp.Result = await _cacheService.GetData<List<MainMenu>>(_cacheMainMenuList(nameof(GetAllMenuModulesNavigation)));
+                if (objResp == null || objResp.Result == null || !objResp.Result.Any())
+                {
+                    objResp.Result = await _context.MainMenus.Include(m => m.SubMenus).AsNoTracking()
+                        .Select(m => new MainMenu
+                        {
+                            MenuID = m.MenuID,
+                            TitleDisplay = m.TitleDisplay,
+                            OrderPriority = m.OrderPriority,
+                            SubMenus = m.SubMenus.Select(n => new SubMenu
+                            {
+                                OrderPriority = n.OrderPriority,
+                                TitleDisplay = n.TitleDisplay,
+                                MenuID = n.MenuID,
+                                SubMenuId = n.SubMenuId,
+                                MainMenuId = null
+                            }).AsList()
+
+                        }).OrderBy(m => m.OrderPriority).ToListAsync();
+
+                    if (objResp.Result != null && objResp.Result.Any())
+                    {
+                        objResp.IsSuccess = true;
+                        _ = _cacheService.SetData<List<MainMenu>>(_cacheMainMenuList(nameof(GetAllMenuModulesNavigation)), objResp.Result, 60 * 60);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                LogRepositoryError<HashSet<MenuModules>>(objResp, nameof(GetMenuAndSubNavigationsGroupRightsByUserGroupId), ex, AppActivityOperationEnum.UserActivity);
+                LogRepositoryError<List<MainMenu>>(objResp, nameof(GetAllMenuModulesNavigation), ex, AppActivityOperationEnum.UserActivity);
             }
             return objResp;
         }
@@ -296,7 +324,7 @@ namespace MedTechAPI.AppCore.Navigation.Repository
                         objResp.Result.Add(menuThatHasSubMenu);
                     }
                 });
-                if(objResp != null && objResp.Result.Count > 0)
+                if (objResp != null && objResp.Result.Count > 0)
                 {
                     objResp.IsSuccess = true;
                 }
@@ -307,7 +335,44 @@ namespace MedTechAPI.AppCore.Navigation.Repository
             }
             return objResp;
         }
-      
+
+        public async Task<GenResponse<List<MainMenu>>> GetUserGroupsWithModuleAndUtilitiesAccess(CancellationToken ct = default)
+        {
+            GenResponse<List<MainMenu>> objResp = new() { Result = new List<MainMenu>() };
+            GenResponse<List<UserGroupActionsGroupedByGroupName>> objResult = new() { Result = new List<UserGroupActionsGroupedByGroupName>()};
+            try
+            {
+                var allMenu = await _sqlData.GetData<AllMenuActions,dynamic>(_scriptsConfig.GetAllMenuActions,new { });
+                var allGroupMenu = await _sqlData.GetData<UserGroupMenuAccess,dynamic>(_scriptsConfig.GetUserGroupPermissions,new { });
+                if(allGroupMenu != null && allGroupMenu.Any())
+                {
+                    //List<IGrouping<string, UserGroupMenuAccess>>
+                        var groupedByRole = allGroupMenu.GroupBy(m=> m.GroupName).ToDictionary(g=> g.Key, g=> g.ToList());
+                    foreach(var item in groupedByRole)
+                    {
+                        UserGroupActionsGroupedByGroupName menuAdd = new()
+                        {
+                            GroupName = item.Key,
+                            GroupDescription = item.Value.FirstOrDefault()?.GroupDescription,
+                            MenuControllerName = item.Value.FirstOrDefault()?.GroupDescription,
+                        };
+                        menuAdd.MenuActions = new();
+                        menuAdd.MenuActions.AddRange(allMenu);
+                        foreach(var action in item.Value)
+                        {
+
+                        }
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogRepositoryError<List<MainMenu>>(objResp, nameof(GetUserGroupsWithModuleAndUtilitiesAccess), ex, AppActivityOperationEnum.UserActivity);
+            }
+            return objResp;
+        }
+
         #region HELPERS
         private void LogRepositoryError<T>(GenResponse<T> objResp, string Identifier, Exception ex, AppActivityOperationEnum operation = AppActivityOperationEnum.SystemOperation, AppActivityLogTypeEnum logType = AppActivityLogTypeEnum.ErrorLog, [CallerMemberName] string caller = "")
         {

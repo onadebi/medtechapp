@@ -52,7 +52,8 @@ try
         app.SeedDefaultsData().Wait();
     }
 }
-catch (Exception ex) { Log.Error(ex.Message, ex); }
+catch (Exception ex) { 
+    Log.Error(ex.Message, ex); }
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -84,7 +85,7 @@ app.UseAuthorization();
 app.Use(async (context, next) =>
 {
     var req = context.Request;
-    Console.Write($"::[{req.Method}] request for path: [{req.Path}] || ");
+    Console.Write($"::[{req.Method}] [${DateTime.Now:yyyy-MM-dd:hh:mm:ss}] request for path: [{req.Path}] || ");
     await next(context);
 });
 app.Use(async (context, next) =>

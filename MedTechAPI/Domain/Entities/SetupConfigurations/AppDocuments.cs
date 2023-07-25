@@ -26,6 +26,12 @@ namespace MedTechAPI.Domain.Entities.SetupConfigurations
         [Required]
         public decimal MaxMbFileSize { get; set; }
 
+        [Required]
+        public bool IsForPatient { get; set; } = true;
+
+        [Required]
+        public bool IsForStaff { get; set; } = false;
+
         public int Category { get; set; } = 0;
 
         #region Navaigational properties

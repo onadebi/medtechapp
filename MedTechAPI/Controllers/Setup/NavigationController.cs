@@ -1,6 +1,7 @@
 ﻿using MedTechAPI.AppCore.Navigation.Interfaces;
 using MedTechAPI.Domain.DTO.Navigation;
 using MedTechAPI.Domain.Entities.ProfileManagement;
+using MedTechAPI.Domain.Entities.SetupConfigurations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OnaxTools.Dto.Http;
@@ -40,11 +41,19 @@ namespace MedTechAPI.Controllers.Setup
             return StatusCode(objResp.StatCode, objResp);
         }
 
-        [HttpGet(nameof(GetUserMenuNavigation))]
+        [HttpPost(nameof(GetUserGroupsWithModuleAndUtilitiesAccess))]
         [ProducesResponseType(typeof(GenResponse<List<MenuModules>>), 200)]
+        public async Task<IActionResult> GetUserGroupsWithModuleAndUtilitiesAccess()
+        {
+            var objResp = await _menuService.GetUserGroupsWithModuleAndUtilitiesAccess();
+            return StatusCode(objResp.StatCode, objResp);
+        }
+
+        [HttpGet(nameof(GetUserMenuNavigation))]
+        [ProducesResponseType(typeof(GenResponse<List<MainMenu>>), 200)]
         public async Task<IActionResult> GetUserMenuNavigation()
         {
-            var objResp = await _menuService.GetUserMenuNavigation();
+            var objResp = await _menuService.GetAllMenuModulesNavigation();
             return StatusCode(objResp.StatCode, objResp);
         }
     }

@@ -40,6 +40,7 @@ namespace MedTechAPI.Extensions
             string rabbitMqConstring = Environment.GetEnvironmentVariable(builder.Configuration.GetValue<string>("AppSettings:MessageBroker:RabbitMq:ConString") ?? string.Empty, EnvironmentVariableTarget.Process) ?? builder.Configuration.GetValue<string>("AppSettings:MessageBroker:RabbitMq:ConString");
 
             services.Configure<AppSettings>(builder.Configuration.GetSection(nameof(AppSettings)));
+            services.Configure<ScriptsConfig>(builder.Configuration.GetSection(nameof(ScriptsConfig)));
             services.Configure<SessionConfig>(builder.Configuration.GetSection(nameof(SessionConfig)));
             services.Configure<EmailConfig>(builder.Configuration.GetSection(nameof(EmailConfig)));
 

@@ -503,7 +503,8 @@ namespace MedTechAPI.AppCore.Repository
                 MedicCompanyId = user.MedicCompanyId,
                 SalutationId = user.SalutationId,
                 GenderCategoryId = user.GenderCategoryId,
-                Password = OnaxTools.Cryptify.EncryptSHA512(user.Password)
+                Password = OnaxTools.Cryptify.EncryptSHA512(user.Password),
+                DateLastLoggedIn = null
             };
             UserLoginResponse objResp = null;
             try

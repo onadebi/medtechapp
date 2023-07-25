@@ -34,6 +34,8 @@ namespace MedTechAPI.Domain.Entities.SetupConfigurations
         public Guid MenuControllerId { get; set; }
         [Required]
         public bool IsSubscribed { get; set; } = true;
+        [Required]
+        public bool IsMenuDisplayed { get; set; } = false;
 
         [Required]
         public DateTime DateLastSubscribed { get; set; } = DateTime.UtcNow;

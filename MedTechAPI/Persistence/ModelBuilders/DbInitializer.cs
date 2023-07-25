@@ -26,16 +26,29 @@
                 await context.MedicCompanyDetails.AddRangeAsync(SeedData.GetMedicCompanyListList(context));
                 await context.SaveChangesAsync();
             }
-
-            if (!context.MainMenus.Any())
+            if (!context.MenuController.Any())
             {
-                await context.MainMenus.AddRangeAsync(SeedData.GetMainMenuList(context));
+                var menuData = SeedData.GetMenuControllers(context);
+                await context.MenuController.AddRangeAsync(menuData);
                 await context.SaveChangesAsync();
             }
-            if (!context.SubMenus.Any())
+            if (!context.MenuControllerActions.Any())
             {
-                await context.SubMenus.AddRangeAsync(SeedData.GetSubMenuList(context));
+                await context.MenuControllerActions.AddRangeAsync(SeedData.GetMenuControllerActions(context));
+                await context.SaveChangesAsync();
             }
+
+            #region PAUSED
+            //if (!context.MainMenus.Any())
+            //{
+            //    await context.MainMenus.AddRangeAsync(SeedData.GetMainMenuList(context));
+            //    await context.SaveChangesAsync();
+            //}
+            //if (!context.SubMenus.Any())
+            //{
+            //    await context.SubMenus.AddRangeAsync(SeedData.GetSubMenuList(context));
+            //}
+            #endregion
 
             if (!context.EmploymentStatus.Any())
             {
@@ -45,20 +58,7 @@
             if (!context.GenderCategories.Any())
             {
                 await context.GenderCategories.AddRangeAsync(SeedData.GetGenderCategoryList());
-            }
-
-            #region PAUSED
-            //if (!context.MenuController.Any())
-            //{
-            //    var menuData = SeedData.GetMenuControllers(context);
-            //    await context.MenuController.AddRangeAsync(menuData);
-            //    await context.SaveChangesAsync();
-            //}
-            //if (!context.MenuControllerActions.Any())
-            //{
-            //    await context.MenuControllerActions.AddRangeAsync(SeedData.GetMenuControllerActions(context));
-            //}
-            #endregion
+            }            
 
             if (!context.UserGroup.Any())
             {
@@ -79,6 +79,7 @@
             {
                 await context.SaveChangesAsync();
             }
+            SeedData.GetAllControllerMenuAnMenuActionsDifference(context);
         }
     }
 }
